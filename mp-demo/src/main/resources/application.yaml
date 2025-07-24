@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:mysql://127.0.0.1:3306/spring_cloud_learn01?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://127.0.0.1:3306/spring_cloud_learn01?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&serverTimezone=Asia/Shanghai&rewriteBatchedStatements=true
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
     password: 1234
@@ -9,6 +9,8 @@ logging:
     com.itheima: debug
   pattern:
     dateformat: HH:mm:ss
+server:
+  port: 8080
 #mybatis:
 #  mapper-locations: classpath*:mapper/*.xml
 mybatis-plus:

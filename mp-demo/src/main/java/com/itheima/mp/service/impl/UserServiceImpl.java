@@ -5,11 +5,15 @@ import com.itheima.mp.domain.po.User;
 import com.itheima.mp.mapper.UserMapper;
 import com.itheima.mp.service.UserService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
 
     @Override
+    @Transactional
     public void deductMoneyById(Long id, Integer money) {
         // 1.查询用户
         User user = getById(id);
@@ -22,6 +26,25 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new RuntimeException("用户余额不足！");
         }
         // 4.扣减余额
-        baseMapper.deductBalance (id, money);
+        int newBalance = user.getBalance() - money;
+        lambdaUpdate()
+                .set(newBalance == 0, User::getBalance, newBalance)
+                .set(User::getStatus, 2)
+                .eq(User::getId, id)
+                .eq(User::getBalance, user.getBalance()) // 乐观锁加锁
+                .update();
+//        baseMapper.deductBalance(id, money);
+    }
+
+    @Override
+    public List<User> queryUsers(String name, Integer status, Integer minBalance, Integer maxBalance) {
+        // 当为复杂查询建议使用 lambdaQuery 进行查询
+        // 简单查询建议直接使用预设的 list，getById 等方法
+        return lambdaQuery()
+                .like(name != null, User::getUsername, name)
+                .eq(status != null, User::getStatus, status)
+                .ge(minBalance != null, User::getBalance, minBalance)
+                .le(maxBalance != null, User::getBalance, maxBalance)
+                .list();
     }
 }
