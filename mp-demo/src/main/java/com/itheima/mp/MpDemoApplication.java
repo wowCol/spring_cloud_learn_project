@@ -10,6 +10,8 @@ public class MpDemoApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(MpDemoApplication.class, args);
+
+        System.out.println("\nSpring Cloud Learn01 Start Success, serve port: 8080");
     }
 
 }
