@@ -1,13 +1,23 @@
 package com.itheima.mp.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.baomidou.mybatisplus.extension.toolkit.Db;
+import com.itheima.mp.domain.po.Address;
 import com.itheima.mp.domain.po.User;
+import com.itheima.mp.domain.vo.AddressVO;
+import com.itheima.mp.domain.vo.UserVO;
 import com.itheima.mp.mapper.UserMapper;
 import com.itheima.mp.service.UserService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
@@ -46,5 +56,63 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 .ge(minBalance != null, User::getBalance, minBalance)
                 .le(maxBalance != null, User::getBalance, maxBalance)
                 .list();
+    }
+
+    @Override
+    public UserVO getUserWithAddress(Long id) {
+        // 1. 获取User对象
+        User user = getById(id);
+        if (user == null || user.getStatus() == 2) {
+            throw new RuntimeException("用户状态异常");
+        }
+
+        // 2. 获取地址信息
+        List<Address> addresses = Db.lambdaQuery(Address.class)
+                .eq(Address::getUserId, user.getId())
+                .list();
+
+        // 3. 将数据装配到 VO
+        // 3.1 装载 UserVO
+        UserVO userVO = BeanUtil.copyProperties(user, UserVO.class);
+        // 3.2 装载 AddressVo
+        if (CollUtil.isNotEmpty(addresses)) {
+            userVO.setAddressVOS(BeanUtil.copyToList(addresses, AddressVO.class));
+        }
+
+        return userVO;
+    }
+
+    @Override
+    public List<UserVO> queryUserAndAddressByIds(List<Long> ids) {
+        // 1. 获取 user 数组
+        List<User> users = listByIds(ids);
+
+        // 2. 提取用户的id
+        List<Long> userIds = users.stream().map(User::getId).collect(Collectors.toList());
+        // 2.1 根据用户 id 查询地址
+        List<Address> addresses = Db.lambdaQuery(Address.class)
+                .in(Address::getUserId, userIds)
+                .list();
+        // 2.2 转换为地址VO
+        List<AddressVO> addressVOs = BeanUtil.copyToList(addresses, AddressVO.class);
+
+        Map<Long, List<AddressVO>> addressVOsMap = new HashMap<>(0);
+        // 2.3 将查询出的 address 根据用户的 id 分组
+        if (CollUtil.isNotEmpty(addressVOs)) {
+            addressVOsMap = addressVOs.stream().collect(Collectors.groupingBy(AddressVO::getUserId));
+        }
+
+        // 3. 转换 VO 返回
+        ArrayList<UserVO> resultList = new ArrayList<>(users.size());
+        for (User user : users) {
+            // 3.1 将 addressVO 放入 users 中
+            UserVO userVO = BeanUtil.copyProperties(user, UserVO.class);
+            resultList.add(userVO);
+
+            // 3.2 将 addressVO 放入 userVO 中
+            userVO.setAddressVOS(addressVOsMap.get(user.getId()));
+        }
+
+        return resultList;
     }
 }

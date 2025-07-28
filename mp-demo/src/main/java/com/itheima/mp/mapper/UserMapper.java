@@ -1,13 +1,10 @@
 package com.itheima.mp.mapper;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.toolkit.Constants;
 import com.itheima.mp.domain.po.User;
 import org.apache.ibatis.annotations.Param;
-
-import java.util.List;
 
 // 继承mybatis-plus，注意添加要使用的实体类
 public interface UserMapper extends BaseMapper<User> {
