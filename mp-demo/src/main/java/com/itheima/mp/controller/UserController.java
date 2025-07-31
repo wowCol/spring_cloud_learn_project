@@ -21,6 +21,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserController {
 
+    // 添加 final 即可让注解自动生成构造函数
+    // 也可使用 @Resource
     private final UserService userService;
 
     @ApiOperation("新增用户接口")
