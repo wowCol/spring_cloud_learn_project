@@ -2,10 +2,15 @@ package com.itheima.mp.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import com.baomidou.mybatisplus.core.metadata.OrderItem;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.baomidou.mybatisplus.extension.toolkit.Db;
+import com.itheima.mp.domain.dto.PageDTO;
 import com.itheima.mp.domain.po.Address;
 import com.itheima.mp.domain.po.User;
+import com.itheima.mp.domain.query.PageQuery;
+import com.itheima.mp.domain.query.UserQuery;
 import com.itheima.mp.domain.vo.AddressVO;
 import com.itheima.mp.domain.vo.UserVO;
 import com.itheima.mp.enums.UserStatus;
@@ -14,10 +19,7 @@ import com.itheima.mp.service.UserService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -115,5 +117,33 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
 
         return resultList;
+    }
+
+    @Override
+    public PageDTO<UserVO> queryUsersPage(UserQuery query) {
+        String name = query.getName();
+        Integer status = query.getStatus();
+
+        Page<User> page = new Page<>();
+        // 1. 构建查询条件
+        if (name != null && status != null) {
+            page = query.toMpPage(query.getSortBy(), query.getIsAsc());
+        } else {
+            page = query.toMpPageDefaultSortByUpdateTime();
+        }
+
+        // 2. 分页查询
+        Page<User> userPage = lambdaQuery()
+                .like(name != null, User::getUsername, name)
+                .eq(status != null, User::getStatus, status)
+                .page(page);
+        // 3.封装 VO 结果并返回
+        return PageDTO.of(userPage, user -> {
+            // 1. 基本属性赋值
+            UserVO userVO = BeanUtil.copyProperties(user, UserVO.class);
+            // 2. 特殊处理
+            user.setUsername("Now: " + userVO.getUsername());
+            return userVO;
+        });
     }
 }

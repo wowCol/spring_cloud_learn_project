@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.itheima.mp.enums.UserStatus;
 import lombok.Data;
 
@@ -17,7 +18,7 @@ import java.time.LocalDateTime;
  4. 成员变量不是数据库字段
 */
 @Data
-@TableName("user")
+@TableName(value = "user", autoResultMap = true) // 设置自动生成 resultMap
 public class User {
 
     // 用户id
@@ -36,9 +37,9 @@ public class User {
     @TableField("phone")
     private String phone;
 
-    // 详细信息
-    @TableField("info")
-    private String info;
+    // 详细信息，设置 JSON 类型的类型处理器为 Jackson
+    @TableField(value = "info", typeHandler = JacksonTypeHandler.class)
+    private UserInfo info;
 
     // 使用状态（1正常 2冻结）
     @TableField("status")
